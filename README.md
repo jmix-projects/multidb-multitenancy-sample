@@ -8,7 +8,9 @@ The application has two data stores:
 1. The main data store contains data shared between all tenants. This includes the list of users and tenants.
 2. The additional datastore called `tenant` provides access to tenant databases.
 
-The `tenant` data store uses [RoutingDatasource](src/main/java/com/company/multidbmt/multitenancy/RoutingDatasource.java) which creates connections to databases provided by [DataSourceRepository](src/main/java/com/company/multidbmt/multitenancy/DataSourceRepository.java). The `DataSourceRepository` class determines which database to use based on the `tenant` attribute of the current user. If the current execution thread is not associated with an authenticated user, the default database is used. 
+The `tenant` data store uses [RoutingDatasource](src/main/java/com/company/multidbmt/multitenancy/RoutingDatasource.java) which creates connections to databases provided by [DataSourceRepository](src/main/java/com/company/multidbmt/multitenancy/DataSourceRepository.java). The `DataSourceRepository` class determines which database to use based on the tenant name stored in the current user session. If the current session has no information about a tenant, the default database is used. 
+
+The [user entity](src/main/java/com/company/multidbmt/entity/User.java) has a direct link to a single tenant. This reference is used to save the tenant name in the current session upon login, see `setCurrentTenantInSession()` method of [LoginView](src/main/java/com/company/multidbmt/view/login/LoginView.java).  
 
 The [TenantDatabaseManager](src/main/java/com/company/multidbmt/multitenancy/TenantDatabaseManager.java) class provides methods to create and drop tenant databases and run Liquibase changelogs for them. It runs Liquibase for all registered tenant databases on the application start.
 

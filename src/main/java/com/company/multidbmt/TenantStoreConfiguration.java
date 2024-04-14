@@ -5,7 +5,6 @@ import com.company.multidbmt.multitenancy.RoutingDatasource;
 import io.jmix.autoconfigure.data.JmixLiquibaseCreator;
 import io.jmix.core.JmixModules;
 import io.jmix.core.Resources;
-import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.data.impl.JmixEntityManagerFactoryBean;
 import io.jmix.data.impl.JmixTransactionManager;
 import io.jmix.data.persistence.DbmsSpecifics;
@@ -37,10 +36,9 @@ public class TenantStoreConfiguration {
 
     @Bean
     @ConfigurationProperties(prefix = "tenant.datasource.hikari")
-    DataSourceRepository datasourceRepository(@Qualifier("tenantDataSourceProperties") DataSourceProperties properties,
-                                              CurrentAuthentication currentAuthentication) {
+    DataSourceRepository datasourceRepository(@Qualifier("tenantDataSourceProperties") DataSourceProperties properties) {
         DataSource defaultDatasource = properties.initializeDataSourceBuilder().build();
-        return new DataSourceRepository(defaultDatasource, currentAuthentication);
+        return new DataSourceRepository(defaultDatasource);
     }
 
     @Bean

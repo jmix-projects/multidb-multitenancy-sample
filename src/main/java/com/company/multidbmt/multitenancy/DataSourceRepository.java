@@ -1,62 +1,75 @@
 package com.company.multidbmt.multitenancy;
 
 import com.company.multidbmt.entity.Tenant;
-import com.company.multidbmt.entity.User;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import io.jmix.core.security.CurrentAuthentication;
+import io.jmix.core.UnconstrainedDataManager;
+import io.jmix.core.session.SessionData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.web.context.request.RequestContextHolder;
 
 import javax.sql.DataSource;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Bean that initializes, stores and returns {@link DataSource}s for {@link Tenant}s associated with the current user.
- * If the tenant cannot be determined, returns the default datasource.
+ * Bean that initializes, stores and returns a {@link DataSource} for the {@link Tenant} associated with the current
+ * user session. If the tenant is not set for the session, returns the default datasource.
  * <p>
  * Instantiated in {@link com.company.multidbmt.TenantStoreConfiguration}.
  */
-public class DataSourceRepository {
+public class DataSourceRepository implements ApplicationContextAware {
 
     private final static Logger log = LoggerFactory.getLogger(DataSourceRepository.class);
 
-    private final Map<Tenant, DataSource> tenantToDatasourceMap = new ConcurrentHashMap<>();
+    public static final String TENANT_NAME_SESSION_ATTR = "MDBMT_TENANT";
+
+    private final Map<String, DataSource> tenantToDatasourceMap = new ConcurrentHashMap<>();
 
     private final DataSource defaultDataSource;
-    private final CurrentAuthentication currentAuthentication;
+    private ObjectProvider<SessionData> sessionDataProvider;
+    private UnconstrainedDataManager dataManager;
 
-    public DataSourceRepository(DataSource defaultDataSource,
-                                CurrentAuthentication currentAuthentication) {
+    public DataSourceRepository(DataSource defaultDataSource) {
         this.defaultDataSource = defaultDataSource;
-        this.currentAuthentication = currentAuthentication;
+    }
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.sessionDataProvider = applicationContext.getBeanProvider(SessionData.class);
+        this.dataManager = applicationContext.getBean(UnconstrainedDataManager.class);
     }
 
     public DataSource getDatasource() {
-        if (!currentAuthentication.isSet()) {
-            log.debug("Current thread is not authenticated");
+        if (RequestContextHolder.getRequestAttributes() == null) {
+            log.debug("Not in a session scope");
             return getDefaultDataSource();
         }
 
-        if (currentAuthentication.getUser() instanceof User user) {
-            if (user.getTenant() == null) {
-                log.debug("Current user does not belong to a tenant");
-                return getDefaultDataSource();
-            }
-
-            return tenantToDatasourceMap.computeIfAbsent(user.getTenant(), this::createDataSource);
-        } else {
-            log.warn("Current user is not of User entity type");
+        String tenantName = (String) sessionDataProvider.getObject().getAttribute(TENANT_NAME_SESSION_ATTR);
+        if (tenantName == null) {
+            log.debug("Tenant is not set for the current session");
             return getDefaultDataSource();
         }
+
+        return tenantToDatasourceMap.computeIfAbsent(tenantName, this::createDataSource);
     }
 
     public DataSource getDefaultDataSource() {
         return defaultDataSource;
     }
 
-    private DataSource createDataSource(Tenant tenant) {
+    private DataSource createDataSource(String tenantName) {
+        Tenant tenant = dataManager.load(Tenant.class)
+                .query("e.name = ?1", tenantName)
+                .optional()
+                .orElseThrow(() -> new RuntimeException("Cannot find tenant " + tenantName));
+
         log.info("Creating DataSource for {}", tenant.getFullDatabaseName());
         HikariConfig hikariConfig = new HikariConfig();
         hikariConfig.setJdbcUrl(tenant.getDatabaseUrl());

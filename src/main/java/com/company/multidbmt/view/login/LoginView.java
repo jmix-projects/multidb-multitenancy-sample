@@ -1,5 +1,8 @@
 package com.company.multidbmt.view.login;
 
+import com.company.multidbmt.entity.Tenant;
+import com.company.multidbmt.entity.User;
+import com.company.multidbmt.multitenancy.DataSourceRepository;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.login.AbstractLogin.LoginEvent;
 import com.vaadin.flow.component.login.LoginI18n;
@@ -10,6 +13,8 @@ import com.vaadin.flow.server.VaadinSession;
 import io.jmix.core.CoreProperties;
 import io.jmix.core.MessageTools;
 import io.jmix.core.security.AccessDeniedException;
+import io.jmix.core.security.CurrentAuthentication;
+import io.jmix.core.session.SessionData;
 import io.jmix.flowui.component.loginform.JmixLoginForm;
 import io.jmix.flowui.kit.component.ComponentUtils;
 import io.jmix.flowui.kit.component.loginform.JmixLoginI18n;
@@ -58,6 +63,11 @@ public class LoginView extends StandardView implements LocaleChangeObserver {
     @Value("${ui.login.defaultPassword:}")
     private String defaultPassword;
 
+    @Autowired
+    private SessionData sessionData;
+    @Autowired
+    private CurrentAuthentication currentAuthentication;
+
     @Subscribe
     public void onInit(final InitEvent event) {
         initLocales();
@@ -92,9 +102,21 @@ public class LoginView extends StandardView implements LocaleChangeObserver {
                             .withLocale(login.getSelectedLocale())
                             .withRememberMe(login.isRememberMe())
             );
+            setCurrentTenantInSession();
         } catch (final BadCredentialsException | DisabledException | LockedException | AccessDeniedException e) {
             log.warn("Login failed for user '{}': {}", event.getUsername(), e.toString());
             event.getSource().setError(true);
+        }
+    }
+
+    /**
+     * If a {@link Tenant} is set for the logged in user, saves the tenant name in the current session.
+     */
+    private void setCurrentTenantInSession() {
+        Tenant tenant = ((User) currentAuthentication.getUser()).getTenant();
+        if (tenant != null) {
+            log.info("Setting tenant " + tenant.getName() + " in current session");
+            sessionData.setAttribute(DataSourceRepository.TENANT_NAME_SESSION_ATTR, tenant.getName());
         }
     }
 
