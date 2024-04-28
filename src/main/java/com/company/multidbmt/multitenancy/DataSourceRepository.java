@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Bean that initializes, stores and returns a {@link DataSource} for the {@link Tenant} associated with the current
  * user session. If the tenant is not set for the session, returns the default datasource.
  * <p>
- * Instantiated in {@link com.company.multidbmt.TenantStoreConfiguration}.
+ * Instantiated in {@link com.company.multidbmt.MultidbmtApplication}.
  */
 public class DataSourceRepository implements ApplicationContextAware {
 

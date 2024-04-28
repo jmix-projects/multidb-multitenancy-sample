@@ -66,7 +66,7 @@ public class TenantDatabaseManager {
         log.info("Running Liquibase for " + url);
         try (Connection connection = DriverManager.getConnection(url, dbUser, dbPassword)) {
             Liquibase liquibase = new Liquibase(
-                    "com/company/multidbmt/liquibase/tenant-changelog.xml",
+                    "com/company/multidbmt/liquibase/changelog.xml",
                     new SpringResourceAccessor(resources),
                     new JdbcConnection(connection));
             liquibase.update();

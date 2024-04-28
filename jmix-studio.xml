@@ -39,7 +39,7 @@
                   <DataStoreSettingsV2 />
                 </value>
               </entry>
-              <entry key="tenant">
+              <entry key="shared">
                 <value>
                   <DataStoreSettingsV2>
                     <option name="generateDdlType" value="CREATE_AND_UPDATE" />

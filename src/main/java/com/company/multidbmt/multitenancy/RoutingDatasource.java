@@ -9,7 +9,7 @@ import java.sql.SQLException;
 /**
  * Returns a connection to a database from a {@link DataSource} returned by {@link DataSourceRepository}.
  * <p>
- * The bean is instantiated in {@link com.company.multidbmt.TenantStoreConfiguration}.
+ * The bean is instantiated in {@link com.company.multidbmt.MultidbmtApplication}.
  */
 public class RoutingDatasource extends AbstractDataSource {
 

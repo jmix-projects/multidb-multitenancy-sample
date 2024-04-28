@@ -3,14 +3,12 @@ package com.company.multidbmt.entity;
 import io.jmix.core.entity.annotation.JmixGeneratedValue;
 import io.jmix.core.metamodel.annotation.InstanceName;
 import io.jmix.core.metamodel.annotation.JmixEntity;
-import io.jmix.core.metamodel.annotation.Store;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.UUID;
 
 @JmixEntity
-@Store(name = "tenant")
 @Table(name = "CUSTOMER")
 @Entity
 public class Customer {

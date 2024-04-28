@@ -4,11 +4,13 @@ import io.jmix.core.entity.annotation.JmixGeneratedValue;
 import io.jmix.core.metamodel.annotation.InstanceName;
 import io.jmix.core.metamodel.annotation.JmixEntity;
 import io.jmix.core.metamodel.annotation.NumberFormat;
+import io.jmix.core.metamodel.annotation.Store;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.UUID;
 
+@Store(name = "shared")
 @JmixEntity
 @Table(name = "TENANT")
 @Entity
